@@ -56,8 +56,8 @@ cd taskmanager
 #### 2. Run automated setup
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+chmod +x run.sh
+./run.sh
 ```
 
 #### Or run manually:
