@@ -49,7 +49,7 @@ A complete 3-tier web application built with **Django**, **MySQL**, and **Nginx*
 #### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Mr-Rko/three-tier-taskmanager/
 cd taskmanager
 ```
 
