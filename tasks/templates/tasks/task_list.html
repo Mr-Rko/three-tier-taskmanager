@@ -1,0 +1,175 @@
+{% extends 'tasks/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>My Tasks</h1>
+            <a href="{% url 'tasks:task_create' %}" class="btn btn-primary">+ New Task</a>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="pending" {% if current_filters.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="in_progress" {% if current_filters.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if current_filters.status == 'completed' %}selected{% endif %}>Completed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Priority</label>
+                        <select name="priority" class="form-select">
+                            <option value="">All Priorities</option>
+                            <option value="low" {% if current_filters.priority == 'low' %}selected{% endif %}>Low</option>
+                            <option value="medium" {% if current_filters.priority == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="high" {% if current_filters.priority == 'high' %}selected{% endif %}>High</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary me-2">Filter</button>
+                        <a href="{% url 'tasks:task_list' %}" class="btn btn-outline-secondary">Clear</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Task List -->
+        {% for task in tasks %}
+        <div class="card mb-3 {% if task.is_overdue %}border-danger{% endif %}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h5 class="card-title">
+                            <a href="{% url 'tasks:task_detail' task.id %}" class="text-decoration-none">
+                                {{ task.title }}
+                            </a>
+                            {% if task.is_overdue %}<span class="badge bg-danger ms-2">Overdue</span>{% endif %}
+                        </h5>
+                        <p class="card-text text-muted">{{ task.description|truncatewords:20 }}</p>
+                        <div class="d-flex gap-2 align-items-center">
+                            <span class="badge bg-{% if task.priority == 'high' %}danger{% elif task.priority == 'medium' %}warning{% else %}info{% endif %}">
+                                {{ task.get_priority_display }}
+                            </span>
+                            <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+                            {% if task.due_date %}
+                            <small class="text-muted">Due: {{ task.due_date|date:"M d, Y H:i" }}</small>
+                            {% endif %}
+                            <small class="text-muted">Created: {{ task.created_at|date:"M d, Y" }}</small>
+                        </div>
+                    </div>
+                    <div class="btn-group ms-3">
+                        <select class="form-select form-select-sm status-select" data-task-id="{{ task.id }}" style="width: auto;">
+                            <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                        </select>
+                        <a href="{% url 'tasks:task_update' task.id %}" class="btn btn-outline-primary btn-sm">Edit</a>
+                        <a href="{% url 'tasks:task_delete' task.id %}" class="btn btn-outline-danger btn-sm">Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5">
+            <h3>No tasks found</h3>
+            <p class="text-muted">Get started by creating your first task!</p>
+            <a href="{% url 'tasks:task_create' %}" class="btn btn-primary">Create Task</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Statistics Sidebar -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Task Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h4 class="text-primary">{{ stats.total }}</h4>
+                        <small class="text-muted">Total</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-success">{{ stats.completed }}</h4>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-danger">{{ stats.overdue }}</h4>
+                        <small class="text-muted">Overdue</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'tasks:task_create' %}" class="btn btn-primary w-100 mb-2">Create New Task</a>
+                <a href="{% url 'tasks:task_list' %}?status=completed" class="btn btn-outline-success w-100 mb-2">View Completed</a>
+                <a href="{% url 'tasks:task_list' %}?status=pending" class="btn btn-outline-warning w-100">View Pending</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelects = document.querySelectorAll('.status-select');
+    
+    statusSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            const taskId = this.dataset.taskId;
+            const newStatus = this.value;
+            
+            fetch(`/tasks/task/${taskId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `status=${newStatus}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating status: ' + data.error);
+                    this.value = this.getAttribute('data-previous-value');
+                }
+            })
+            .catch(error => {
+                alert('Error updating status: ' + error);
+                this.value = this.getAttribute('data-previous-value');
+            });
+        });
+    });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: "mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DB: mydb
+    networks:
+      - threetier
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: always
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: "nginx"
+    ports:
+      - "80:80"
+    networks:
+      - threetier
+    volumes:
+      - ./staticfiles:/app/backend/staticfiles
+    restart: always
+    depends_on:
+      - django_cont 
+
+  django_cont:
+    build:
+      context: .
+    container_name: "django_cont"
+    env_file:
+      - ".env"
+    networks:
+      - threetier
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./staticfiles:/app/backend/staticfiles
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn taskmanager.wsgi --bind 0.0.0.0:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/admin || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+networks:
+  threetier:
+volumes:
+  mysql_data:
