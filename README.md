@@ -86,12 +86,12 @@ docker-compose up --build
 ```
 taskmanager/
 ├── docker-compose.yml          # Multi-container setup
-├── setup.sh                    # Automated setup script
+├── run.sh                      # Automated setup script
 ├── database-setup.sql          # Database schema & sample data
 ├── .env                        # Environment variables
 ├── nginx/
 │   ├── Dockerfile              # Nginx container
-│   └── nginx.conf              # Nginx configuration
+│   └── default.conf            # Nginx configuration
 ├── taskmanager/                # Django project
 │   ├── settings.py             # Django settings
 │   ├── urls.py                 # Project URLs
