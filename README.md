@@ -1,6 +1,6 @@
-# 🚀 Django Task Manager - 3-Tier Web Application
+# 🚀 Django Task Manager - with nginx and mysql
 
-A complete 3-tier web application built with **Django**, **MySQL**, and **Nginx**, fully containerized with **Docker**. Includes a full task management system with authentication, filtering, and real-time updates.
+A complete web application built with **Django**, **MySQL**, and **Nginx**, fully containerized with **Docker**. Includes a full task management system with authentication, filtering, and real-time updates.
 
 ---
 
